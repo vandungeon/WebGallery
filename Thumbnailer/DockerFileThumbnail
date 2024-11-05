@@ -1,0 +1,5 @@
+
+FROM openjdk:17-jdk-slim
+
+COPY target/thumbnailer-1.0-SNAPSHOT.jar /Thumbnailer.jar
+ENTRYPOINT ["java", "-jar", "/Thumbnailer.jar"]

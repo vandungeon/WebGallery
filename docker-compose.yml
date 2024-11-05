@@ -1,4 +1,4 @@
-version: '3.8'
+
 services:
   app:
     image: imagegallery
@@ -6,18 +6,45 @@ services:
       context: .
       dockerfile: DockerFile
     volumes:
-      - images:/app/images  # Mount for images
-      - thumbnails:/app/thumbnails  # Mount for thumbnails
+      - images:/app/images
+      - thumbnails:/app/thumbnails
     ports:
       - "8080:8080"
     depends_on:
       - db
+      - rabbitmq
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgresdb
       SPRING_DATASOURCE_USERNAME: van
       SPRING_DATASOURCE_PASSWORD: mops294
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_QUEUE_REQUEST: thumbnailRequestQueue
+      RABBITMQ_QUEUE_RESPONSE: thumbnailResponseQueue
 
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      APP_THUMBNAIL_OUTPUT_DIR: /app/thumbnails
+
+  thumbnail-service:
+    build:
+      context: ./Thumbnailer
+      dockerfile: DockerFileThumbnail
+    volumes:
+        - images:/app/images
+        - thumbnails:/app/thumbnails
+    depends_on:
+        - rabbitmq
+    environment:
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        SPRING_RABBITMQ_USERNAME: guest
+        SPRING_RABBITMQ_PASSWORD: guest
+        APP_THUMBNAIL_OUTPUT_DIR: /app/thumbnails
+        RABBITMQ_QUEUE_REQUEST: thumbnailRequestQueue
+        RABBITMQ_QUEUE_RESPONSE: thumbnailResponseQueue
 
   db:
     image: postgres:latest
@@ -30,7 +57,20 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"  # AMQP protocol port for messaging
+      - "15672:15672"  # Web management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:15672/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 volumes:
   pgdata:
-  images: {}
-  thumbnails: {}
+  images:
+  thumbnails:

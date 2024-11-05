@@ -48,8 +48,7 @@
             <!-- Loop through each image in the list and display the thumbnail -->
             <div class="col-md-3 image-container" th:each="image : ${images}">
                 <div class="card">
-                    <!-- Display the 256x256 thumbnail -->
-                    <img th:src="@{/uploadsT(json=${image.getThumbnails()}, size='256x256')}" class="card-img-top"
+                    <img th:src="@{/uploadsT(json=${image.getThumbnails()}, size='256')}" class="card-img-top"
                          data-toggle="modal"
                          data-target="#imageModal"
                          th:attr="data-img=@{/uploads/{filename}(filename=${image.name})}"
@@ -83,7 +82,6 @@
 
 <script>
     $(document).ready(function() {
-        // When a thumbnail image is clicked, show the full-sized image in the modal
         $('img[data-toggle="modal"]').on('click', function() {
             var imgSrc = $(this).data('img'); // Get the full-sized image path
             $('#modalImage').attr('src', imgSrc); // Set the modal image source
